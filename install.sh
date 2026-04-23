@@ -6,7 +6,7 @@
 # Downloads the latest release from GitHub and installs it to ~/.local/bin.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/hexfellow/hex-flow/master/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/hexfellow/hex-flow/main/install.sh | sh
 
 set -u
 
@@ -211,6 +211,62 @@ add_to_path() {
 }
 
 # ---------------------------------------------------------------------------
+# Shell completions
+# ---------------------------------------------------------------------------
+
+add_zsh_fpath() {
+    local _comp_dir="$1"
+    local _zshrc="${HOME}/.zshrc"
+
+    if [ -f "$_zshrc" ] && grep -q "$_comp_dir" "$_zshrc" 2>/dev/null; then
+        return
+    fi
+
+    # Only touch .zshrc if zsh is actually installed
+    if ! command -v zsh > /dev/null 2>&1; then
+        return
+    fi
+
+    ignore touch "$_zshrc"
+    printf '\n# Added by hexflow installer — shell completions\nfpath=(%s $fpath)\nautoload -Uz compinit && compinit\n' "$_comp_dir" >> "$_zshrc"
+    say "added fpath entry to $_zshrc (restart zsh or run: source ~/.zshrc)"
+}
+
+install_completions() {
+    local _install_dir="$1"
+    local _bin="${_install_dir}/${BINARY_NAME}"
+
+    if [ ! -x "$_bin" ]; then
+        return
+    fi
+
+    # Bash — ~/.local/share/bash-completion/completions/ is auto-discovered
+    local _bash_comp_dir="${HOME}/.local/share/bash-completion/completions"
+    if mkdir -p "$_bash_comp_dir" 2>/dev/null; then
+        if "$_bin" completions bash > "${_bash_comp_dir}/${BINARY_NAME}" 2>/dev/null; then
+            say "installed bash completions to ${_bash_comp_dir}/${BINARY_NAME}"
+        fi
+    fi
+
+    # Zsh — needs fpath entry to auto-discover
+    local _zsh_comp_dir="${HOME}/.local/share/zsh/site-functions"
+    if mkdir -p "$_zsh_comp_dir" 2>/dev/null; then
+        if "$_bin" completions zsh > "${_zsh_comp_dir}/_${BINARY_NAME}" 2>/dev/null; then
+            say "installed zsh completions to ${_zsh_comp_dir}/_${BINARY_NAME}"
+            add_zsh_fpath "$_zsh_comp_dir"
+        fi
+    fi
+
+    # Fish — ~/.config/fish/completions/ is auto-discovered
+    local _fish_comp_dir="${HOME}/.config/fish/completions"
+    if mkdir -p "$_fish_comp_dir" 2>/dev/null; then
+        if "$_bin" completions fish > "${_fish_comp_dir}/${BINARY_NAME}.fish" 2>/dev/null; then
+            say "installed fish completions to ${_fish_comp_dir}/${BINARY_NAME}.fish"
+        fi
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -273,6 +329,8 @@ main() {
     fi
 
     "${INSTALL_DIR}/${BINARY_NAME}" --version 2>/dev/null && say "installation complete!"
+
+    install_completions "$INSTALL_DIR"
 }
 
 main "$@" || exit 1
