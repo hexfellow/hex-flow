@@ -17,23 +17,30 @@ Requires `zenohd` to be available in PATH.
 ### Launch Nodes
 
 ```bash
-# Start router + nodes from a config file
+# Start router + nodes from a YAML config
 hexflow run launch.yml
+
+# Or use a Python launch script that generates the YAML
+hexflow run scripts/mycfg.launch.py
 ```
 
+Config files can be `.yml`, `.yaml`, or `.launch.py`. A `.launch.py` file is executed with `python3` and must print the path to the generated YAML file to stdout. This replaces the common pattern `hexflow run $(python scripts/mycfg.launch.py)`.
+
 What happens on `run`:
-1. Checks if `zenohd` is already running; starts one if not
-2. Spawns each node with `HEX_FLOW_NODE_NAME` and `HEX_FLOW_REMAP` env vars injected
-3. Enters a TUI (can be disabled) showing live stdout/stderr of all nodes
-4. On Ctrl-C or any required node exit, shuts down all processes in reverse order (SIGTERM, then SIGKILL after 5s)
+1. If the config is a `.launch.py` script, runs it with `python3` and reads the YAML path from its output
+2. Checks if `zenohd` is already running; starts one if not
+3. Spawns each node inside a **pseudo-terminal (PTY)** with `HEX_FLOW_NODE_NAME` and `HEX_FLOW_REMAP` env vars injected
+4. Enters a TUI (can be disabled) showing live output of all nodes — each process sees a real TTY, so interactive programs (`vim`, `htop`, Python scripts using `curses`, etc.) work correctly
+5. On Ctrl-C or any required node exit, shuts down all processes in reverse order (SIGTERM, then SIGKILL after 5s)
 
 ### Build Nodes
 
 ```bash
 hexflow build launch.yml
+hexflow build scripts/mycfg.launch.py
 ```
 
-Runs the `build` command for each node sequentially.
+Runs the `build` command for each node sequentially. Accepts the same file types as `run`.
 
 ### Monitor Topics
 
