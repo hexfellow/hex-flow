@@ -28,7 +28,7 @@ hexflow run scripts/mycfg.launch.py
 
 执行 `run` 时的流程：
 1. 若配置为 `.launch.py` 脚本，则用 `python3` 运行并从其输出读取 YAML 路径
-2. 检测本机是否已有 `zenohd` 运行，若无则启动
+2. 终止已有的 `zenohd` 进程（SIGTERM）并启动新实例（可通过 `skip-killing-old-zenohd: true` 禁用）
 3. 在**伪终端 (PTY)** 中启动各节点，注入 `HEX_FLOW_NODE_NAME` 与 `HEX_FLOW_REMAP` 环境变量
 4. 进入 TUI（可通过配置关闭），显示各节点实时输出 — 每个进程拥有真实 TTY，交互式程序（`vim`、`htop`、使用 `curses` 的 Python 脚本等）可正常工作
 5. 收到 Ctrl-C 或任一 required 节点退出后，按逆序关闭所有进程（先 SIGTERM，5 秒后再 SIGKILL）
@@ -64,6 +64,7 @@ router:
 launcher:
   disable-tui: false
   tui-log-to-file: false
+  skip-killing-old-zenohd: false
 
 nodes:
   - name: my_node
@@ -89,7 +90,7 @@ nodes:
 | `Ctrl+C`           | 退出                           |
 | `Ctrl+B`           | 进入前缀模式                   |
 | `Ctrl+B` → `Space` | 切换布局（竖直 / 水平 / 矩阵） |
-| `Ctrl+B` → `↑/↓`   | 在面板间切换焦点               |
+| `Ctrl+B` → `↑/↓/←/→` | 在面板间切换焦点（适应布局方向） |
 | `Ctrl+B` → `z`     | 缩放当前聚焦面板               |
 | `Ctrl+B` → `h`     | 切换隐藏面板显示               |
 | `Ctrl+B` → `[`     | 进入滚动模式                   |

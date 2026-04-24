@@ -28,7 +28,7 @@ Config files can be `.yml`, `.yaml`, or `.launch.py`. A `.launch.py` file is exe
 
 What happens on `run`:
 1. If the config is a `.launch.py` script, runs it with `python3` and reads the YAML path from its output
-2. Checks if `zenohd` is already running; starts one if not
+2. Kills any existing `zenohd` process (SIGTERM) and starts a fresh one (disable with `skip-killing-old-zenohd: true`)
 3. Spawns each node inside a **pseudo-terminal (PTY)** with `HEX_FLOW_NODE_NAME` and `HEX_FLOW_REMAP` env vars injected
 4. Enters a TUI (can be disabled) showing live output of all nodes — each process sees a real TTY, so interactive programs (`vim`, `htop`, Python scripts using `curses`, etc.) work correctly
 5. On Ctrl-C or any required node exit, shuts down all processes in reverse order (SIGTERM, then SIGKILL after 5s)
@@ -64,6 +64,7 @@ router:
 launcher:
   disable-tui: false
   tui-log-to-file: false
+  skip-killing-old-zenohd: false
 
 nodes:
   - name: my_node
@@ -89,7 +90,7 @@ nodes:
 | `Ctrl+C`           | Quit                                      |
 | `Ctrl+B`           | Enter prefix mode                         |
 | `Ctrl+B` → `Space` | Cycle layout (vertical/horizontal/matrix) |
-| `Ctrl+B` → `↑/↓`   | Switch focus between panels               |
+| `Ctrl+B` → `↑/↓/←/→` | Move focus between panels (layout-aware) |
 | `Ctrl+B` → `z`     | Zoom focused panel                        |
 | `Ctrl+B` → `h`     | Toggle hidden panels                      |
 | `Ctrl+B` → `[`     | Enter scroll mode                         |
